@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ruangan Cerita</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+  <!-- Header -->
+  <header class="bg-red-400 text-white p-4 text-center text-xl font-semibold">
+    Ruangan Cerita
+  </header>
+
+  <!-- Navigation -->
+  <nav class="flex justify-around bg-white border-t fixed bottom-0 left-0 right-0 z-10">
+    <button onclick="showTab('write')" id="navWrite" class="py-2 px-4 font-semibold text-red-400">Tulis</button>
+    <button onclick="showTab('list')" id="navList" class="py-2 px-4">Cerita</button>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="p-4 pb-24">
+    <!-- Tulis Cerita -->
+    <section id="write" class="">
+      <form id="storyForm" class="space-y-4" enctype="multipart/form-data">
+        <input type="text" name="judul" placeholder="Judul Cerita" required class="w-full p-2 border rounded">
+        <textarea name="isi" rows="5" placeholder="Isi Cerita..." required class="w-full p-2 border rounded"></textarea>
+        <input type="text" name="nama" placeholder="Namamu" required class="w-full p-2 border rounded">
+        <input type="file" name="cover" accept="image/*" class="w-full">
+        <button type="submit" class="bg-red-400 text-white w-full py-2 rounded">Kirim Cerita</button>
+        <div class="text-center text-sm text-green-600" id="message"></div>
+      </form>
+    </section>
+
+    <!-- Daftar Cerita -->
+    <section id="list" class="hidden">
+      <div id="storyList" class="flex gap-4 overflow-x-auto pt-4 pb-20"></div>
+    </section>
+  </main>
+
+  <!-- Script -->
+  <script>
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxmi6svSOoPv989Ga2mIIDCkuWyLD0OXd1Rn6vRG77zI9K0fw9Q1tW_Nys_Zid30ZjBfA/exec';
+    const form = document.getElementById('storyForm');
+    const message = document.getElementById('message');
+    const storyList = document.getElementById('storyList');
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const data = new FormData(form);
+      fetch(scriptURL, { method: 'POST', body: data })
+        .then(res => res.text())
+        .then(() => {
+          message.textContent = "Cerita berhasil dikirim!";
+          form.reset();
+          loadStories();
+        })
+        .catch(err => {
+          message.textContent = "Gagal mengirim cerita.";
+          console.error(err);
+        });
+    });
+
+    function showTab(tab) {
+      document.getElementById('write').classList.toggle('hidden', tab !== 'write');
+      document.getElementById('list').classList.toggle('hidden', tab !== 'list');
+      document.getElementById('navWrite').classList.toggle('text-red-400', tab === 'write');
+      document.getElementById('navList').classList.toggle('text-red-400', tab === 'list');
+      if (tab === 'list') loadStories();
+    }
+
+    function loadStories() {
+      storyList.innerHTML = 'Memuat...';
+      fetch(scriptURL)
+        .then(res => res.json())
+        .then(data => {
+          storyList.innerHTML = '';
+          data.forEach(cerita => {
+            const card = document.createElement('div');
+            card.className = 'w-60 shrink-0 bg-white rounded shadow p-3 cursor-pointer';
+            card.innerHTML = `
+              <img src="${cerita.cover || 'https://via.placeholder.com/300x200/60a5fa/ffffff?text=Cover'}" class="w-full h-32 object-cover rounded mb-2">
+              <h3 class="text-lg font-semibold">${cerita.judul}</h3>
+              <p class="text-sm text-gray-500">${cerita.nama}</p>
+            `;
+            card.onclick = () => {
+              window.location.href = 'cerita.html?rowId=' + cerita.rowId;
+            };
+            storyList.appendChild(card);
+          });
+        })
+        .catch(err => {
+          storyList.innerHTML = "<p class='text-red-500'>Gagal memuat cerita.</p>";
+          console.error(err);
+        });
+    }
+
+    window.onload = () => {
+      showTab('write');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Halaman Cerita</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 p-4">
+
+  <a href="index.html" class="text-red-500 underline mb-4 inline-block">← Kembali</a>
+
+  <div id="cerita" class="mb-6">Memuat cerita...</div>
+
+  <textarea id="komentar" placeholder="Tulis komentar..." rows="4" class="w-full p-2 border rounded mb-2"></textarea>
+  <button onclick="kirimKomentar()" class="bg-red-400 text-white w-full py-2 rounded mb-4">Kirim Komentar</button>
+
+  <div class="flex gap-2 items-center">
+    <span class="text-gray-600">Berikan rating:</span>
+    <div id="rating" class="flex gap-1">
+      <button onclick="vote(1)" class="w-8 h-8 rounded-full bg-gray-300 hover:bg-red-400"></button>
+      <button onclick="vote(1)" class="w-8 h-8 rounded-full bg-gray-300 hover:bg-red-400"></button>
+      <button onclick="vote(1)" class="w-8 h-8 rounded-full bg-gray-300 hover:bg-red-400"></button>
+      <button onclick="vote(1)" class="w-8 h-8 rounded-full bg-gray-300 hover:bg-red-400"></button>
+      <button onclick="vote(1)" class="w-8 h-8 rounded-full bg-gray-300 hover:bg-red-400"></button>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const rowId = params.get('rowId');
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbxmi6svSOoPv989Ga2mIIDCkuWyLD0OXd1Rn6vRG77zI9K0fw9Q1tW_Nys_Zid30ZjBfA/exec';
+
+    fetch(scriptURL)
+      .then(res => res.json())
+      .then(data => {
+        const cerita = data.find(item => item.rowId == rowId);
+        if (!cerita) {
+          document.getElementById('cerita').innerHTML = '<p class="text-red-500">Cerita tidak ditemukan.</p>';
+          return;
+        }
+
+        document.getElementById("cerita").innerHTML = `
+          <h2 class="text-2xl font-semibold mb-1">${cerita.judul}</h2>
+          <p class="text-sm text-gray-500 mb-4">oleh ${cerita.nama} - ${cerita.tanggal}</p>
+          <img src="${cerita.cover || 'https://via.placeholder.com/300x200/60a5fa/ffffff?text=Cover'}" class="w-full h-48 object-cover rounded mb-4">
+          <div class="text-base leading-relaxed whitespace-pre-line">${cerita.isi}</div>
+        `;
+      });
+
+    function kirimKomentar() {
+      const komentar = document.getElementById("komentar").value;
+      fetch(`${scriptURL}?action=comment&rowId=${rowId}&komentar=${encodeURIComponent(komentar)}`)
+        .then(res => res.json())
+        .then(res => {
+          alert('Komentar berhasil dikirim!');
+          document.getElementById("komentar").value = "";
+        });
+    }
+
+    function vote(value) {
+      fetch(`${scriptURL}?action=vote&rowId=${rowId}&value=${value}`)
+        .then(res => res.json())
+        .then(res => {
+          alert("Terima kasih atas vote kamu!");
+        });
+    }
+  </script>
+</body>
+</html>
